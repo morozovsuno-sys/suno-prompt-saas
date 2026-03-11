@@ -1,4 +1,18 @@
-async function generate() {
+async function generate() const contact = localStorage.getItem("user") || "guest"
+
+const res = await fetch("/api/generate",{
+ method:"POST",
+ headers:{ "Content-Type":"application/json" },
+ body: JSON.stringify({contact})
+})
+
+const data = await res.json()
+
+if(data.paywall){
+ alert("Free limit reached")
+ return
+}
+{
 
   const contact = document.getElementById("contact").value;
 
