@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        /* ========== ПОЛНЫЙ НАБОР СТИЛЕЙ ИЗ ПРОТОТИПА (с небольшими дополнениями для подписки) ========== */
+        /* ========== ПОЛНЫЙ НАБОР СТИЛЕЙ (без изменений) ========== */
         :root {
             --primary: #8b5cf6;
             --primary-dark: #7c3aed;
@@ -405,7 +405,7 @@
             <div class="nav-tab" data-section="guide">📚 Справочник</div>
         </nav>
 
-        <!-- ========== ГЕНЕРАТОР (ПОЛНЫЙ НАБОР) ========== -->
+        <!-- ========== ГЕНЕРАТОР ========== -->
         <div id="generator" class="section active">
             <div class="main-grid">
                 <div class="card">
@@ -476,7 +476,7 @@
                         </div>
                     </div>
 
-                    <!-- НАСТРОЕНИЕ (полный набор) -->
+                    <!-- НАСТРОЕНИЕ -->
                     <div class="form-group"><label class="form-label">😊 Настроение</label>
                         <div class="tags-container" id="moodTags">
                             <span class="tag" data-value="Energetic">⚡ Энергичное</span>
@@ -497,7 +497,7 @@
                         </div>
                     </div>
 
-                    <!-- ИНСТРУМЕНТЫ (полный набор) -->
+                    <!-- ИНСТРУМЕНТЫ -->
                     <div class="form-group"><label class="form-label">🎸 Инструменты</label>
                         <div class="tags-container" id="instrumentTags">
                             <span class="tag" data-value="Piano">🎹 Фортепиано</span>
@@ -533,7 +533,7 @@
                         <textarea class="form-textarea" id="additionalDesc" placeholder="Опишите детали: стиль вокала, атмосферу, референсы..."></textarea>
                     </div>
 
-                    <!-- Pro: Вокал и эмоции (скрыты до подписки) -->
+                    <!-- Pro: Вокал и эмоции -->
                     <div class="advanced-section" id="advancedSection" style="display:none;">
                         <div class="form-group"><label class="form-label">🎙️ Тип вокала</label>
                             <div class="vocal-grid" id="vocalTypeGrid">
@@ -595,7 +595,7 @@
             </div>
         </div>
 
-        <!-- ========== СТРУКТУРА (полный набор) ========== -->
+        <!-- ========== СТРУКТУРА ========== -->
         <div id="structure" class="section">
             <div class="card">
                 <div class="card-header"><div class="card-icon">📐</div><div><h2 class="card-title">Мета-теги структуры</h2><p class="card-subtitle">Кликните, чтобы добавить в структуру</p></div></div>
@@ -617,14 +617,13 @@
             </div>
         </div>
 
-        <!-- ========== МАСТЕРИНГ (полный набор, будет скрыт до подписки) ========== -->
+        <!-- ========== МАСТЕРИНГ ========== -->
         <div id="mastering" class="section">
             <div class="card" id="masteringCard">
                 <div class="card-header"><div class="card-icon">🎚️</div><div><h2 class="card-title">Мастеринг-теги</h2><p class="card-subtitle">340+ тегов для профессионального звучания (только Pro)</p></div></div>
                 <div id="masteringLockMessage" class="lock-message"><p>🔒 Мастеринг-теги доступны только по подписке Pro.</p><button id="upgradeFromMastering">💎 Купить Pro</button></div>
                 <div id="masteringContent" style="display:none;">
                     <div class="search-container" style="position:relative;margin-bottom:24px;"><span style="position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text-muted);">🔍</span><input type="text" class="form-input" id="masteringSearch" placeholder="Поиск тегов..." style="padding-left:45px;"></div>
-                    <!-- Категории (все из прототипа) -->
                     <div class="mastering-category"><div class="mastering-category-title">📊 Общие</div><div class="mastering-grid" id="masteringGeneral">
                         <span class="mastering-tag" data-value="[MASTERED]">MASTERED</span><span class="mastering-tag" data-value="[FINAL MIXDOWN]">FINAL MIXDOWN</span>
                         <span class="mastering-tag" data-value="[PRO MIX]">PRO MIX</span><span class="mastering-tag" data-value="[PROFESSIONALLY MIXED]">PROFESSIONALLY MIXED</span>
@@ -666,7 +665,7 @@
             </div>
         </div>
 
-        <!-- ========== ПРИМЕРЫ (несколько) ========== -->
+        <!-- ========== ПРИМЕРЫ ========== -->
         <div id="examples" class="section">
             <div class="card">
                 <div class="card-header"><div class="card-icon">💡</div><div><h2 class="card-title">Готовые примеры</h2><p class="card-subtitle">Кликните, чтобы загрузить</p></div></div>
@@ -809,6 +808,10 @@
                 }
             }
 
+            // ================== ИНИЦИАЛИЗАЦИЯ ЗНАЧЕНИЙ ==================
+            // Устанавливаем начальное отображение BPM
+            bpmValue.textContent = bpmSlider.value + ' BPM';
+
             // ================== НАВИГАЦИЯ ПО ВКЛАДКАМ ==================
             navTabs.forEach(tab => {
                 tab.addEventListener('click', () => {
@@ -877,6 +880,11 @@
                         selectedInstruments.push(val);
                     }
                 });
+            });
+
+            // ================== ПОЛЗУНОК BPM ==================
+            bpmSlider.addEventListener('input', function() {
+                bpmValue.textContent = this.value + ' BPM';
             });
 
             // ================== ТИП ВОКАЛА (PRO) ==================
