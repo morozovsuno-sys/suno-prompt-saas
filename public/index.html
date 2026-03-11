@@ -1702,285 +1702,496 @@
     <div class="toast" id="toast"><span>✅</span><span id="toastMessage"></span></div>
 
     <script>
-        (function() {
-            // ================== СОСТОЯНИЕ ПОДПИСКИ ==================
-            let isSubscribed = localStorage.getItem('suno_subscribed') === 'true';
+<script>
+(function() {
+    // ================== СОСТОЯНИЕ ПРИЛОЖЕНИЯ ==================
+    const state = {
+        trackName: '',
+        genre: '',
+        key: '',
+        mode: '',
+        timeSignature: '4/4',
+        moods: [],
+        instruments: [],
+        bpm: 120,
+        additionalDesc: '',
+        appMode: 'simple',
+        vocalType: '',
+        vocalEmotions: [],
+        scaleType: '',
+        chordPalette: '',
+        currentStructure: '',
+        selectedMasteringTags: [],
+        stats: { totalGenerations: 0 }
+    };
 
-            // DOM элементы для подписки и блокировки
-            const subscribeBtn = document.getElementById('subscribeButton');
-            const subStatusSpan = document.querySelector('#subscriptionStatus span:last-child');
-            const proLockMessage = document.getElementById('proLockMessage');
-            const masteringLockMessage = document.getElementById('masteringLockMessage');
-            const masteringContent = document.getElementById('masteringContent');
-            const upgradeFromLock = document.getElementById('upgradeFromLock');
-            const upgradeFromMastering = document.getElementById('upgradeFromMastering');
-            const modeBtns = document.querySelectorAll('.mode-btn');
-            const advancedSection = document.getElementById('advancedSection');
-            const proSection = document.getElementById('proSection');
+    // ================== ПОДПИСКА (ОСТАЁТСЯ) ==================
+    let isSubscribed = localStorage.getItem('suno_subscribed') === 'true';
 
-            // Элементы, которые блокируются для неподписанных
-            const vocalOptions = document.querySelectorAll('.vocal-option');
-            const vocalEmotionTags = document.querySelectorAll('#vocalEmotionTags .tag');
-            const masteringTags = document.querySelectorAll('.mastering-tag');
+    const subscribeBtn = document.getElementById('subscribeButton');
+    const subStatusSpan = document.querySelector('#subscriptionStatus span:last-child');
+    const proLockMessage = document.getElementById('proLockMessage');
+    const masteringLockMessage = document.getElementById('masteringLockMessage');
+    const masteringContent = document.getElementById('masteringContent');
+    const upgradeFromLock = document.getElementById('upgradeFromLock');
+    const upgradeFromMastering = document.getElementById('upgradeFromMastering');
+    const modeBtns = document.querySelectorAll('.mode-btn');
+    const advancedSection = document.getElementById('advancedSection');
+    const proSection = document.getElementById('proSection');
+    const vocalOptions = document.querySelectorAll('.vocal-option');
+    const vocalEmotionTags = document.querySelectorAll('#vocalEmotionTags .tag');
+    const masteringTags = document.querySelectorAll('.mastering-tag');
 
-            // ================== ФУНКЦИИ ПОДПИСКИ ==================
-            function updateUI() {
-                if (isSubscribed) {
-                    subStatusSpan.textContent = 'Pro доступен';
-                    subscribeBtn.style.display = 'none';
-                    // Разблокируем Pro-элементы
-                    vocalOptions.forEach(opt => opt.classList.remove('locked'));
-                    vocalEmotionTags.forEach(tag => tag.classList.remove('locked'));
-                    masteringTags.forEach(tag => tag.classList.remove('locked'));
-                    // Показываем контент мастеринга
-                    if (masteringContent) masteringContent.style.display = 'block';
-                    if (masteringLockMessage) masteringLockMessage.style.display = 'none';
-                    // Если текущий режим advanced/pro, оставляем как есть
-                } else {
-                    subStatusSpan.textContent = 'Бесплатный режим';
-                    subscribeBtn.style.display = 'inline-flex';
-                    // Блокируем Pro-элементы
-                    vocalOptions.forEach(opt => opt.classList.add('locked'));
-                    vocalEmotionTags.forEach(tag => tag.classList.add('locked'));
-                    masteringTags.forEach(tag => tag.classList.add('locked'));
-                    // Скрываем контент мастеринга
-                    if (masteringContent) masteringContent.style.display = 'none';
-                    if (masteringLockMessage) masteringLockMessage.style.display = 'block';
-                    // Если активен advanced или pro, принудительно переключаем на simple
-                    const activeMode = document.querySelector('.mode-btn.active');
-                    if (activeMode && (activeMode.dataset.mode === 'advanced' || activeMode.dataset.mode === 'pro')) {
-                        // Программно кликаем по simple
-                        const simpleBtn = document.querySelector('[data-mode="simple"]');
-                        if (simpleBtn) simpleBtn.click();
-                    }
-                }
+    // Функция обновления UI подписки
+    function updateSubscriptionUI() {
+        if (isSubscribed) {
+            subStatusSpan.textContent = 'Pro доступен';
+            subscribeBtn.style.display = 'none';
+            vocalOptions.forEach(opt => opt.classList.remove('locked'));
+            vocalEmotionTags.forEach(tag => tag.classList.remove('locked'));
+            masteringTags.forEach(tag => tag.classList.remove('locked'));
+            if (masteringContent) masteringContent.style.display = 'block';
+            if (masteringLockMessage) masteringLockMessage.style.display = 'none';
+        } else {
+            subStatusSpan.textContent = 'Бесплатный режим';
+            subscribeBtn.style.display = 'inline-flex';
+            vocalOptions.forEach(opt => opt.classList.add('locked'));
+            vocalEmotionTags.forEach(tag => tag.classList.add('locked'));
+            masteringTags.forEach(tag => tag.classList.add('locked'));
+            if (masteringContent) masteringContent.style.display = 'none';
+            if (masteringLockMessage) masteringLockMessage.style.display = 'block';
+            // Если активный режим advanced/pro – сбрасываем на simple
+            const activeMode = document.querySelector('.mode-btn.active');
+            if (activeMode && (activeMode.dataset.mode === 'advanced' || activeMode.dataset.mode === 'pro')) {
+                document.querySelector('[data-mode="simple"]').click();
             }
+        }
+    }
 
-            function upgrade() {
-                localStorage.setItem('suno_subscribed', 'true');
-                isSubscribed = true;
-                updateUI();
-                showToast('✅ Подписка оформлена! Спасибо за поддержку.');
+    function upgrade() {
+        localStorage.setItem('suno_subscribed', 'true');
+        isSubscribed = true;
+        updateSubscriptionUI();
+        showToast('✅ Подписка оформлена!');
+    }
+
+    subscribeBtn.addEventListener('click', upgrade);
+    if (upgradeFromLock) upgradeFromLock.addEventListener('click', upgrade);
+    if (upgradeFromMastering) upgradeFromMastering.addEventListener('click', upgrade);
+
+    // ================== ПЕРЕКЛЮЧЕНИЕ РЕЖИМОВ ==================
+    modeBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            const mode = this.dataset.mode;
+            if ((mode === 'advanced' || mode === 'pro') && !isSubscribed) {
+                proLockMessage.style.display = 'block';
+                showToast('💎 Оформите подписку для доступа к Pro-функциям', true);
+                return;
             }
+            proLockMessage.style.display = 'none';
 
-            subscribeBtn.addEventListener('click', upgrade);
-            if (upgradeFromLock) upgradeFromLock.addEventListener('click', upgrade);
-            if (upgradeFromMastering) upgradeFromMastering.addEventListener('click', upgrade);
+            modeBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            state.appMode = mode;
 
-            // ================== ПЕРЕКЛЮЧЕНИЕ РЕЖИМОВ (с проверкой подписки) ==================
-            modeBtns.forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    const mode = this.dataset.mode;
-                    // Проверка подписки для advanced/pro
-                    if ((mode === 'advanced' || mode === 'pro') && !isSubscribed) {
-                        proLockMessage.style.display = 'block';
-                        showToast('💎 Оформите подписку для доступа к Pro-функциям', true);
-                        return;
-                    }
-                    proLockMessage.style.display = 'none';
-
-                    // Убираем active у всех, добавляем текущей
-                    modeBtns.forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-
-                    // Показываем/скрываем секции
-                    if (mode === 'simple') {
-                        advancedSection.style.display = 'none';
-                        proSection.style.display = 'none';
-                    } else if (mode === 'advanced') {
-                        advancedSection.style.display = 'block';
-                        proSection.style.display = 'none';
-                    } else if (mode === 'pro') {
-                        advancedSection.style.display = 'block';
-                        proSection.style.display = 'block';
-                    }
-                });
-            });
-
-            // ================== БЛОКИРОВКА КЛИКОВ НА PRO-ЭЛЕМЕНТАХ ==================
-            function preventIfNotSubscribed(e) {
-                if (!isSubscribed) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    showToast('🔒 Доступно только в Pro', true);
-                    return false;
-                }
-                return true;
+            if (mode === 'simple') {
+                advancedSection.style.display = 'none';
+                proSection.style.display = 'none';
+            } else if (mode === 'advanced') {
+                advancedSection.style.display = 'block';
+                proSection.style.display = 'none';
+            } else if (mode === 'pro') {
+                advancedSection.style.display = 'block';
+                proSection.style.display = 'block';
             }
+        });
+    });
 
-            vocalOptions.forEach(opt => {
-                opt.addEventListener('click', function(e) {
-                    if (!preventIfNotSubscribed(e)) return;
-                    // Стандартная логика выбора (как в исходном коде)
-                    vocalOptions.forEach(o => o.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
+    // ================== ЗАГРУЗКА ЭЛЕМЕНТОВ DOM ==================
+    const trackNameInput = document.getElementById('trackName');
+    const mainGenreSelect = document.getElementById('mainGenre');
+    const keySignatureSelect = document.getElementById('keySignature');
+    const modeSignatureSelect = document.getElementById('modeSignature');
+    const timeSignatureSelect = document.getElementById('timeSignature');
+    const moodTags = document.querySelectorAll('#moodTags .tag');
+    const instrumentTags = document.querySelectorAll('#instrumentTags .tag');
+    const bpmSlider = document.getElementById('bpmSlider');
+    const bpmValue = document.getElementById('bpmValue');
+    const additionalDescInput = document.getElementById('additionalDesc');
+    const generateBtn = document.getElementById('generateBtn');
+    const styleResult = document.getElementById('styleResult');
+    const lyricsResult = document.getElementById('lyricsResult');
+    const masteringResult = document.getElementById('masteringResult');
+    const fullResult = document.getElementById('fullResult');
+    const randomizeBtn = document.getElementById('randomizeBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const scaleTypeSelect = document.getElementById('scaleType');
+    const chordPaletteInput = document.getElementById('chordPalette');
+    const currentStructure = document.getElementById('currentStructure');
+    const clearStructureBtn = document.getElementById('clearStructureBtn');
+    const copyStructureBtn = document.getElementById('copyStructureBtn');
+    const selectedMasteringResult = document.getElementById('selectedMasteringResult');
+    const selectedCount = document.getElementById('selectedCount');
+    const clearMasteringBtn = document.getElementById('clearMasteringBtn');
+    const masteringSearch = document.getElementById('masteringSearch');
+    const totalGenerationsStat = document.getElementById('totalGenerationsStat');
 
-            vocalEmotionTags.forEach(tag => {
-                tag.addEventListener('click', function(e) {
-                    if (!preventIfNotSubscribed(e)) return;
-                    this.classList.toggle('active');
-                });
-            });
+    // ================== ОБРАБОТЧИКИ ВВОДА ==================
+    trackNameInput.addEventListener('input', e => state.trackName = e.target.value);
+    mainGenreSelect.addEventListener('change', e => state.genre = e.target.value);
+    keySignatureSelect.addEventListener('change', e => state.key = e.target.value);
+    modeSignatureSelect.addEventListener('change', e => state.mode = e.target.value);
+    timeSignatureSelect.addEventListener('change', e => state.timeSignature = e.target.value);
+    bpmSlider.addEventListener('input', e => {
+        state.bpm = +e.target.value;
+        bpmValue.textContent = `${state.bpm} BPM`;
+    });
+    additionalDescInput.addEventListener('input', e => state.additionalDesc = e.target.value);
+    scaleTypeSelect.addEventListener('change', e => state.scaleType = e.target.value);
+    chordPaletteInput.addEventListener('input', e => state.chordPalette = e.target.value);
 
-            // Для мастеринг-тегов сохраним их функциональность, добавив блокировку
-            // (полная логика мастеринга будет взята из исходного скрипта, но мы её переопределим здесь упрощённо,
-            // чтобы сохранить работоспособность. В реальном проекте лучше объединить с исходным кодом.)
-            // Однако, чтобы не ломать исходный код, мы оставим его как есть, но добавим блокировку через CSS и обработчики.
-            // В исходном скрипте ниже есть своя инициализация мастеринг-тегов. Мы просто продублируем блокировку здесь.
-            masteringTags.forEach(tag => {
-                tag.addEventListener('click', function(e) {
-                    if (!preventIfNotSubscribed(e)) return;
-                    // Логика будет выполнена в исходном обработчике, но нам нужно предотвратить двойное срабатывание?
-                    // Просто добавим проверку и разрешим выполнение.
-                });
-            });
-
-            // ================== ИСХОДНЫЙ КОД ИЗ ПРОТОТИПА (сокращён для экономии места, но ключевые функции сохранены) ==================
-            // Здесь должен быть полный исходный скрипт из первого сообщения, но для краткости мы оставим только основные моменты,
-            // чтобы не перегружать ответ. В реальном проекте он бы остался без изменений, просто добавлены проверки подписки.
-            // Однако, чтобы всё работало, необходимо, чтобы все исходные обработчики событий были установлены.
-            // В данном ответе мы предполагаем, что исходный код уже включён (он был в первом сообщении),
-            // но из-за ограничений длины мы его опускаем. Пользователь может сам объединить.
-            // Для демонстрации работоспособности подписки и навигации достаточно того, что уже есть.
-
-            // Простейшие заглушки для генерации (чтобы кнопки работали)
-            document.getElementById('generateBtn').addEventListener('click', function() {
-                document.getElementById('styleResult').textContent = 'Пример промта (базовый)';
-                document.getElementById('fullResult').textContent = 'Style: ...';
-                showToast('✅ Промт сгенерирован');
-            });
-
-            document.getElementById('randomizeBtn').addEventListener('click', function() {
-                document.getElementById('mainGenre').value = 'Electronic';
-                document.getElementById('bpmSlider').value = 128;
-                document.getElementById('bpmValue').textContent = '128 BPM';
-                showToast('🎲 Случайные параметры');
-            });
-
-            document.getElementById('clearBtn').addEventListener('click', function() {
-                document.getElementById('mainGenre').value = '';
-                document.getElementById('bpmSlider').value = 120;
-                document.getElementById('bpmValue').textContent = '120 BPM';
-                document.getElementById('styleResult').textContent = 'Выберите параметры';
-                document.getElementById('fullResult').textContent = '--';
-                showToast('🗑️ Очищено');
-            });
-
-            // Навигация по вкладкам (дублируем для гарантии)
-            const navTabs = document.querySelectorAll('.nav-tab');
-            const sections = document.querySelectorAll('.section');
-            navTabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    navTabs.forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    sections.forEach(s => {
-                        s.classList.remove('active');
-                        if (s.id === tab.dataset.section) s.classList.add('active');
-                    });
-                });
-            });
-
-            // Структура (упрощённо)
-            let structureText = '';
-            document.querySelectorAll('.structure-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const tag = item.dataset.tag;
-                    structureText = structureText ? structureText + '\n' + tag : tag;
-                    document.getElementById('currentStructure').textContent = structureText;
-                    document.getElementById('lyricsResult').textContent = structureText;
-                    showToast(`✅ Тег ${tag} добавлен`);
-                });
-            });
-
-            document.getElementById('clearStructureBtn').addEventListener('click', () => {
-                structureText = '';
-                document.getElementById('currentStructure').textContent = 'Пусто. Кликните на теги выше.';
-                document.getElementById('lyricsResult').textContent = 'Пусто. Кликните на теги в разделе "Структура".';
-                showToast('🗑️ Структура очищена');
-            });
-
-            document.getElementById('copyStructureBtn').addEventListener('click', () => {
-                if (structureText) {
-                    navigator.clipboard.writeText(structureText);
-                    showToast('✅ Скопировано');
-                } else {
-                    showToast('⚠️ Нечего копировать', true);
-                }
-            });
-
-            // Мастеринг (упрощённо)
-            let selectedMastering = [];
-            masteringTags.forEach(tag => {
-                tag.addEventListener('click', function(e) {
-                    if (!isSubscribed) {
-                        e.preventDefault();
-                        showToast('🔒 Доступно только в Pro', true);
-                        return;
-                    }
-                    const val = this.dataset.value;
-                    const idx = selectedMastering.indexOf(val);
-                    if (idx > -1) {
-                        selectedMastering.splice(idx, 1);
-                        this.classList.remove('active');
-                    } else {
-                        selectedMastering.push(val);
-                        this.classList.add('active');
-                    }
-                    document.getElementById('selectedCount').textContent = selectedMastering.length;
-                    document.getElementById('selectedMasteringResult').textContent = selectedMastering.join(' ') || 'Выберите теги выше';
-                    document.getElementById('masteringResult').textContent = selectedMastering.join(' ') || 'Выберите теги в разделе "Мастеринг"';
-                });
-            });
-
-            document.getElementById('clearMasteringBtn').addEventListener('click', () => {
-                selectedMastering = [];
-                masteringTags.forEach(t => t.classList.remove('active'));
-                document.getElementById('selectedCount').textContent = '0';
-                document.getElementById('selectedMasteringResult').textContent = 'Выберите теги выше';
-                document.getElementById('masteringResult').textContent = 'Выберите теги в разделе "Мастеринг"';
-                showToast('🗑️ Мастеринг теги очищены');
-            });
-
-            // Копирование
-            document.querySelectorAll('.copy-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    const targetId = this.dataset.target;
-                    const target = document.getElementById(targetId);
-                    if (target && target.textContent && !target.textContent.includes('Пусто') && !target.textContent.includes('Выберите')) {
-                        navigator.clipboard.writeText(target.textContent);
-                        showToast('✅ Скопировано');
-                    } else {
-                        showToast('⚠️ Нечего копировать', true);
-                    }
-                });
-            });
-
-            // Примеры
-            document.querySelectorAll('.example-card').forEach(card => {
-                card.addEventListener('click', function() {
-                    // Здесь можно загрузить пример (упрощённо)
-                    showToast('✅ Пример загружен (демо)');
-                });
-            });
-
-            // Утилита для тостов
-            function showToast(msg, isError = false) {
-                const toast = document.getElementById('toast');
-                const toastMsg = document.getElementById('toastMessage');
-                toastMsg.textContent = msg;
-                toast.classList.toggle('error', isError);
-                toast.classList.add('show');
-                setTimeout(() => toast.classList.remove('show'), 3000);
+    // ================== ТЕГИ НАСТРОЕНИЯ ==================
+    moodTags.forEach(tag => {
+        tag.addEventListener('click', function() {
+            this.classList.toggle('active');
+            const val = this.dataset.value;
+            if (state.moods.includes(val)) {
+                state.moods = state.moods.filter(v => v !== val);
+            } else {
+                state.moods.push(val);
             }
+        });
+    });
 
-            // Инициализация подписки
-            updateUI();
+    // ================== ТЕГИ ИНСТРУМЕНТОВ ==================
+    instrumentTags.forEach(tag => {
+        tag.addEventListener('click', function() {
+            this.classList.toggle('active');
+            const val = this.dataset.value;
+            if (state.instruments.includes(val)) {
+                state.instruments = state.instruments.filter(v => v !== val);
+            } else {
+                state.instruments.push(val);
+            }
+        });
+    });
 
-            // Статистика (заглушка)
-            document.getElementById('totalGenerationsStat').textContent = localStorage.getItem('totalGenerations') || 0;
-        })();
+    // ================== ВОКАЛ (PRO) ==================
+    vocalOptions.forEach(opt => {
+        opt.addEventListener('click', function(e) {
+            if (!isSubscribed) {
+                e.preventDefault();
+                showToast('🔒 Доступно только в Pro', true);
+                return;
+            }
+            vocalOptions.forEach(o => o.classList.remove('active'));
+            this.classList.add('active');
+            state.vocalType = this.dataset.value;
+        });
+    });
+
+    vocalEmotionTags.forEach(tag => {
+        tag.addEventListener('click', function(e) {
+            if (!isSubscribed) {
+                e.preventDefault();
+                showToast('🔒 Доступно только в Pro', true);
+                return;
+            }
+            this.classList.toggle('active');
+            const val = this.dataset.value;
+            if (state.vocalEmotions.includes(val)) {
+                state.vocalEmotions = state.vocalEmotions.filter(v => v !== val);
+            } else {
+                state.vocalEmotions.push(val);
+            }
+        });
+    });
+
+    // ================== МАСТЕРИНГ ТЕГИ (PRO) ==================
+    let selectedMastering = state.selectedMasteringTags;
+    masteringTags.forEach(tag => {
+        tag.addEventListener('click', function(e) {
+            if (!isSubscribed) {
+                e.preventDefault();
+                showToast('🔒 Доступно только в Pro', true);
+                return;
+            }
+            const val = this.dataset.value;
+            const idx = selectedMastering.indexOf(val);
+            if (idx > -1) {
+                selectedMastering.splice(idx, 1);
+                this.classList.remove('active');
+            } else {
+                selectedMastering.push(val);
+                this.classList.add('active');
+            }
+            updateMasteringDisplay();
+        });
+    });
+
+    function updateMasteringDisplay() {
+        selectedCount.textContent = selectedMastering.length;
+        const display = selectedMastering.length ? selectedMastering.join(' ') : 'Выберите теги выше';
+        selectedMasteringResult.textContent = display;
+        masteringResult.textContent = display;
+        state.selectedMasteringTags = selectedMastering;
+    }
+
+    clearMasteringBtn.addEventListener('click', () => {
+        selectedMastering = [];
+        masteringTags.forEach(t => t.classList.remove('active'));
+        updateMasteringDisplay();
+        showToast('🗑️ Мастеринг теги очищены');
+    });
+
+    masteringSearch.addEventListener('input', e => {
+        const term = e.target.value.toLowerCase();
+        masteringTags.forEach(tag => {
+            tag.style.display = tag.textContent.toLowerCase().includes(term) ? 'block' : 'none';
+        });
+    });
+
+    // ================== СТРУКТУРА ==================
+    document.querySelectorAll('.structure-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const tag = item.dataset.tag;
+            state.currentStructure = state.currentStructure ? state.currentStructure + '\n' + tag : tag;
+            currentStructure.textContent = state.currentStructure;
+            lyricsResult.textContent = state.currentStructure;
+            showToast(`✅ Тег ${tag} добавлен`);
+        });
+    });
+
+    clearStructureBtn.addEventListener('click', () => {
+        state.currentStructure = '';
+        currentStructure.textContent = 'Пусто. Кликните на теги выше.';
+        lyricsResult.textContent = 'Пусто. Кликните на теги в разделе "Структура".';
+        showToast('🗑️ Структура очищена');
+    });
+
+    copyStructureBtn.addEventListener('click', () => {
+        if (state.currentStructure) {
+            navigator.clipboard.writeText(state.currentStructure);
+            showToast('✅ Скопировано');
+        } else {
+            showToast('⚠️ Нечего копировать', true);
+        }
+    });
+
+    // ================== ГЕНЕРАЦИЯ ПРОМТА ==================
+    function generatePrompt() {
+        const parts = [];
+
+        if (state.genre) parts.push(state.genre);
+        if (state.key && state.mode) parts.push(`${state.key} ${state.mode}`);
+        if (state.moods.length) parts.push(...state.moods);
+        if (state.instruments.length) parts.push(...state.instruments);
+        parts.push(`${state.bpm} BPM`);
+        if (state.timeSignature && state.timeSignature !== '4/4') parts.push(state.timeSignature);
+
+        if (state.appMode === 'advanced' || state.appMode === 'pro') {
+            if (state.vocalType) parts.push(state.vocalType);
+            if (state.vocalEmotions.length) parts.push(...state.vocalEmotions);
+        }
+        if (state.appMode === 'pro') {
+            if (state.scaleType) parts.push(`scale: ${state.scaleType}`);
+            if (state.chordPalette) parts.push(`chords: ${state.chordPalette}`);
+        }
+        if (state.additionalDesc) parts.push(state.additionalDesc);
+
+        const stylePrompt = parts.join(', ') || 'Выберите параметры для генерации';
+        styleResult.textContent = stylePrompt;
+
+        const full = state.trackName
+            ? `Title: ${state.trackName}\n\nStyle: ${stylePrompt}\n\nStructure:\n${state.currentStructure || '(пусто)'}\n\nMastering: ${state.selectedMasteringTags.join(' ') || '(пусто)'}`
+            : `${stylePrompt}\n\nStructure:\n${state.currentStructure || '(пусто)'}\n\nMastering: ${state.selectedMasteringTags.join(' ') || '(пусто)'}`;
+        fullResult.textContent = full;
+
+        if (parts.length > 0) {
+            state.stats.totalGenerations++;
+            localStorage.setItem('totalGenerations', state.stats.totalGenerations);
+            totalGenerationsStat.textContent = state.stats.totalGenerations;
+            showToast('✅ Промт сгенерирован');
+        } else {
+            showToast('⚠️ Выберите хотя бы один параметр', true);
+        }
+    }
+
+    generateBtn.addEventListener('click', generatePrompt);
+
+    // ================== СЛУЧАЙНЫЙ ВЫБОР ==================
+    randomizeBtn.addEventListener('click', () => {
+        const genres = ['Electronic', 'Pop', 'Rock', 'Hip Hop', 'Jazz', 'Ambient'];
+        const keys = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+        const modes = ['major', 'minor', 'lydian', 'phrygian', 'dorian', 'mixolydian'];
+        const moods = ['Energetic', 'Melancholic', 'Romantic', 'Dark', 'Uplifting', 'Chill', 'Dreamy', 'Epic'];
+        const instruments = ['Piano', 'Guitar', 'Synthesizer', 'Drums', 'Bass', 'Strings', '808', 'Arpeggio', 'Pads'];
+
+        state.genre = genres[Math.floor(Math.random() * genres.length)];
+        mainGenreSelect.value = state.genre;
+
+        state.key = keys[Math.floor(Math.random() * keys.length)];
+        keySignatureSelect.value = state.key;
+
+        state.mode = modes[Math.floor(Math.random() * modes.length)];
+        modeSignatureSelect.value = state.mode;
+
+        // Сброс старых активных тегов
+        moodTags.forEach(t => t.classList.remove('active'));
+        instrumentTags.forEach(t => t.classList.remove('active'));
+
+        state.moods = [];
+        const moodCount = Math.floor(Math.random() * 3) + 1;
+        for (let i = 0; i < moodCount; i++) {
+            const rm = moods[Math.floor(Math.random() * moods.length)];
+            if (!state.moods.includes(rm)) {
+                state.moods.push(rm);
+                const tag = document.querySelector(`#moodTags .tag[data-value="${rm}"]`);
+                if (tag) tag.classList.add('active');
+            }
+        }
+
+        state.instruments = [];
+        const instCount = Math.floor(Math.random() * 4) + 2;
+        for (let i = 0; i < instCount; i++) {
+            const ri = instruments[Math.floor(Math.random() * instruments.length)];
+            if (!state.instruments.includes(ri)) {
+                state.instruments.push(ri);
+                const tag = document.querySelector(`#instrumentTags .tag[data-value="${ri}"]`);
+                if (tag) tag.classList.add('active');
+            }
+        }
+
+        state.bpm = Math.floor(Math.random() * 100) + 70;
+        bpmSlider.value = state.bpm;
+        bpmValue.textContent = state.bpm + ' BPM';
+
+        const descs = [
+            'Powerful vocals, emotional delivery',
+            'Instrumental, cinematic atmosphere',
+            'Female ethereal vocals, dreamy',
+            'Upbeat, perfect for dancing',
+            'Relaxing, meditation music',
+            '80s style, nostalgic synth sounds'
+        ];
+        state.additionalDesc = descs[Math.floor(Math.random() * descs.length)];
+        additionalDescInput.value = state.additionalDesc;
+
+        showToast('🎲 Случайные параметры выбраны');
+    });
+
+    // ================== ОЧИСТКА ВСЕГО ==================
+    clearBtn.addEventListener('click', () => {
+        state.trackName = '';
+        state.genre = '';
+        state.key = '';
+        state.mode = '';
+        state.timeSignature = '4/4';
+        state.moods = [];
+        state.instruments = [];
+        state.bpm = 120;
+        state.additionalDesc = '';
+        state.vocalType = '';
+        state.vocalEmotions = [];
+        state.scaleType = '';
+        state.chordPalette = '';
+        state.currentStructure = '';
+        state.selectedMasteringTags = [];
+
+        trackNameInput.value = '';
+        mainGenreSelect.value = '';
+        keySignatureSelect.value = '';
+        modeSignatureSelect.value = '';
+        timeSignatureSelect.value = '4/4';
+        moodTags.forEach(t => t.classList.remove('active'));
+        instrumentTags.forEach(t => t.classList.remove('active'));
+        bpmSlider.value = 120;
+        bpmValue.textContent = '120 BPM';
+        additionalDescInput.value = '';
+        vocalOptions.forEach(o => o.classList.remove('active'));
+        vocalEmotionTags.forEach(t => t.classList.remove('active'));
+        scaleTypeSelect.value = '';
+        chordPaletteInput.value = '';
+        masteringTags.forEach(t => t.classList.remove('active'));
+
+        selectedMastering = [];
+        updateMasteringDisplay();
+
+        styleResult.textContent = 'Выберите параметры и нажмите "Сгенерировать"';
+        lyricsResult.textContent = 'Пусто. Кликните на теги в разделе "Структура".';
+        fullResult.textContent = '--';
+        currentStructure.textContent = 'Пусто. Кликните на теги выше.';
+
+        showToast('🗑️ Все параметры очищены');
+    });
+
+    // ================== КОПИРОВАНИЕ ==================
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            const targetId = this.dataset.target;
+            const target = document.getElementById(targetId);
+            if (target && target.textContent && !target.textContent.includes('Пусто') && !target.textContent.includes('Выберите')) {
+                navigator.clipboard.writeText(target.textContent);
+                this.classList.add('copied');
+                setTimeout(() => this.classList.remove('copied'), 1500);
+                showToast('✅ Скопировано');
+            } else {
+                showToast('⚠️ Нечего копировать', true);
+            }
+        });
+    });
+
+    // ================== ПРИМЕРЫ ==================
+    document.querySelectorAll('.example-card').forEach(card => {
+        card.addEventListener('click', function() {
+            try {
+                const example = JSON.parse(this.dataset.example);
+                // Загрузка примера (упрощённо)
+                mainGenreSelect.value = example.genre;
+                state.genre = example.genre;
+                // ... остальные поля можно добавить по аналогии
+                showToast('✅ Пример загружен (базовый)');
+            } catch (e) {
+                showToast('❌ Ошибка загрузки примера', true);
+            }
+        });
+    });
+
+    // ================== НАВИГАЦИЯ ПО ВКЛАДКАМ ==================
+    const navTabs = document.querySelectorAll('.nav-tab');
+    const sections = document.querySelectorAll('.section');
+    navTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            navTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            sections.forEach(s => {
+                s.classList.remove('active');
+                if (s.id === tab.dataset.section) s.classList.add('active');
+            });
+        });
+    });
+
+    // ================== TOAST ==================
+    function showToast(msg, isError = false) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMessage');
+        toastMsg.textContent = msg;
+        toast.classList.toggle('error', isError);
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ================== СТАТИСТИКА ==================
+    const savedGen = localStorage.getItem('totalGenerations');
+    if (savedGen) {
+        state.stats.totalGenerations = parseInt(savedGen);
+        totalGenerationsStat.textContent = savedGen;
+    }
+
+    // Инициализация подписки
+    updateSubscriptionUI();
+})();
+</script>
     </script>
 </body>
 </html>
