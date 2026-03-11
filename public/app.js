@@ -1,20 +1,27 @@
-async function generate(){
+async function generate() {
 
- const contact = document.getElementById("contact").value
+  const contact = document.getElementById("contact").value;
 
- const res = await fetch("/api/generate",{
-  method:"POST",
-  headers:{ "Content-Type":"application/json" },
-  body: JSON.stringify({contact})
- })
+  if (!contact) {
+    alert("Enter email or telegram");
+    return;
+  }
 
- const data = await res.json()
+  const res = await fetch("/api/generate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ contact })
+  });
 
- if(data.paywall){
-  alert("You used 5 free prompts today. Upgrade to PRO.")
-  return
- }
+  const data = await res.json();
 
- document.getElementById("result").innerText = data.prompt
+  if (data.paywall) {
+    alert("Free limit reached (5). Please subscribe.");
+    return;
+  }
+
+  document.getElementById("result").innerText = data.prompt;
 
 }
